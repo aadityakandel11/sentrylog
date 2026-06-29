@@ -1,0 +1,8 @@
+# Never commit raw/unsanitized telemetry exports.
+# Only the sanitized sample (data/attack_burst_sample.csv) belongs in the repo.
+attack_burst.csv
+*_raw.csv
+data/raw/
+.env
+__pycache__/
+*.pyc

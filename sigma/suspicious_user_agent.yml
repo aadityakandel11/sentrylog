@@ -1,0 +1,32 @@
+title: Suspicious Non-Browser User Agent on Okta Login
+id: 8f2a1c4e-3b7d-4a92-9e1f-2c6b8d0a5e44
+status: experimental
+description: >
+  Detects successful Okta logins where the client user-agent matches a known
+  automation tool (python-requests, curl, wget, Go-http-client, Postman).
+  A non-browser user agent on an interactive login indicates scripted access
+  and possible credential abuse or account takeover.
+author: Aaditya Kandel
+date: 2026/06/25
+references:
+  - https://attack.mitre.org/techniques/T1078/
+logsource:
+  product: okta
+  service: okta
+detection:
+  selection:
+    eventType: user.session.start
+    client.userAgent.rawUserAgent|contains:
+      - 'python-requests'
+      - 'curl'
+      - 'Wget'
+      - 'Go-http-client'
+      - 'PostmanRuntime'
+  condition: selection
+falsepositives:
+  - Legitimate automation, integrations, or service accounts that authenticate
+    with a non-browser user agent. Allowlist known-good automation before alerting.
+level: high
+tags:
+  - attack.initial_access
+  - attack.t1078

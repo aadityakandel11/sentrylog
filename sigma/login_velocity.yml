@@ -1,0 +1,51 @@
+# Detection #1: Login Velocity / Burst
+#
+# NOTE: This uses Sigma's CORRELATION feature (event_count over a timespan).
+# Correlation is a newer Sigma capability and is NOT supported by every backend.
+# It converts cleanly to backends that support aggregation (e.g. Splunk, Elastic
+# with the right pipeline) but will fail on simple field-match-only backends.
+# This is a known limitation of expressing time-window logic in Sigma.
+
+# --- Base rule: defines WHAT event we are counting (a login) ---
+title: Okta Login Event (base for velocity correlation)
+id: a1b2c3d4-1111-2222-3333-444455556666
+name: okta_login_event
+status: experimental
+description: Base rule matching a single Okta login, used by the velocity correlation.
+logsource:
+  product: okta
+  service: okta
+detection:
+  selection:
+    eventType: user.session.start
+  condition: selection
+---
+# --- Correlation rule: fires when the base event happens >= 6 times
+#     for the same user within 15 seconds ---
+title: Login Velocity Burst - Possible Automated Credential Abuse
+id: b2c3d4e5-7777-8888-9999-aaaabbbbcccc
+status: experimental
+description: >
+  Detects 6 or more Okta logins by a single user within a 15-second window.
+  No human authenticates that many times that quickly; this density indicates
+  automation such as credential stuffing or scripted session abuse.
+author: Aaditya Kandel
+date: 2026/06/25
+references:
+  - https://attack.mitre.org/techniques/T1110/
+correlation:
+  type: event_count
+  rules:
+    - okta_login_event
+  group-by:
+    - actor.alternateId
+  timespan: 15s
+  condition:
+    gte: 6
+falsepositives:
+  - Service accounts or integrations performing legitimate high-frequency logins.
+  - SSO re-authentication loops or misconfigured clients retrying rapidly.
+level: high
+tags:
+  - attack.credential_access
+  - attack.t1110
